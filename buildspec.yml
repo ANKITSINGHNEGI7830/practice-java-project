@@ -6,11 +6,9 @@ phases:
       - yum install -y java-17-amazon-corretto-devel
       - export JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto
       - export PATH=$JAVA_HOME/bin:$PATH
-      - java -version
 
   pre_build:
     commands:
-      - echo "Logging in to Amazon ECR..."
       - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 764720836686.dkr.ecr.ap-south-1.amazonaws.com
       - REPOSITORY_URI=764720836686.dkr.ecr.ap-south-1.amazonaws.com/test-project
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
@@ -18,15 +16,12 @@ phases:
 
   build:
     commands:
-      - echo "Maven build..."
       - mvn -B package --file pom.xml -DskipTests
-      - echo "Docker build..."
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 
   post_build:
     commands:
-      - echo "Pushing to ECR..."
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - printf '[{"name":"samplejavawebapp","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
