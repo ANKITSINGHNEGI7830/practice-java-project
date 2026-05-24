@@ -3,12 +3,10 @@ version: 0.2
 phases:
   install:
     commands:
-      - echo "Installing Java 17..."
       - yum install -y java-17-amazon-corretto-devel
       - export JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto
       - export PATH=$JAVA_HOME/bin:$PATH
       - java -version
-      - mvn -version
 
   pre_build:
     commands:
@@ -20,18 +18,17 @@ phases:
 
   build:
     commands:
-      - echo "Building with Maven..."
+      - echo "Maven build..."
       - mvn -B package --file pom.xml -DskipTests
-      - echo "Building Docker image..."
+      - echo "Docker build..."
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
 
   post_build:
     commands:
-      - echo "Pushing Docker image to ECR..."
+      - echo "Pushing to ECR..."
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - echo "Writing image definitions..."
       - printf '[{"name":"samplejavawebapp","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 
 artifacts:
